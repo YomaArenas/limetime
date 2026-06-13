@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fundación Auristela — 15 años</title>
+<!-- Tipografías: en producción descomenta estas dos líneas para cargar Fraunces + Archivo.
+     Para que el prototipo funcione sin conexión, usamos fallbacks de sistema (ver CSS). -->
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,400..600&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="gsap.min.js"></script>
+<style>
+  :root{
+    --ink:#0b0b0d;
+    --paper:#f3efe6;
+    --muted:rgba(243,239,230,.62);
+    --line:rgba(243,239,230,.16);
+    --accent:#d8b25a;            /* se sobreescribe por década con JS */
+    --ease: cubic-bezier(.7,0,.18,1);
+    --pad: clamp(20px, 4vw, 64px);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Archivo',ui-sans-serif,system-ui,'Helvetica Neue',Arial,sans-serif;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ====== SECCIÓN A PANTALLA COMPLETA ====== */
+  .stage{
+    position:fixed; inset:0;
+    height:100svh; width:100%;
+    overflow:hidden;
+  }
+
+  /* capa de imágenes (una por hito, apiladas) */
+  .panels{position:absolute; inset:0}
+  .panel{
+    position:absolute; inset:0;
+    opacity:0; visibility:hidden;
+  }
+  .panel .media{
+    position:absolute; inset:-8% -4%;        /* margen extra para el parallax */
+    background-size:cover; background-position:center;
+    will-change:transform;
+    transform:scale(1.06);
+  }
+  /* gradientes para legibilidad del texto */
+  .panel::after{
+    content:""; position:absolute; inset:0;
+    background:
+      linear-gradient(to top, rgba(11,11,13,.92) 0%, rgba(11,11,13,.30) 42%, rgba(11,11,13,.05) 70%),
+      linear-gradient(to right, rgba(11,11,13,.78) 0%, rgba(11,11,13,.10) 45%, rgba(11,11,13,0) 70%);
+    pointer-events:none;
+  }
+  .grain{
+    position:absolute; inset:0; pointer-events:none; opacity:.05; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ====== ENCABEZADO ====== */
+  .top{
+    position:absolute; top:0; left:0; right:0;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    padding:var(--pad); z-index:6; pointer-events:none;
+  }
+  .intro{max-width:34ch}
+  .kicker{
+    font-size:11px; letter-spacing:.32em; text-transform:uppercase;
+    color:var(--accent); font-weight:600; margin-bottom:14px;
+    transition:color .6s var(--ease);
+  }
+  .intro h1{
+    font-family:'Fraunces',Georgia,'Times New Roman',serif; font-weight:340; font-size:clamp(15px,1.5vw,19px);
+    line-height:1.45; color:var(--muted);
+  }
+  .brand{
+    font-family:'Fraunces',Georgia,'Times New Roman',serif; font-weight:600; font-size:clamp(18px,2vw,26px);
+    letter-spacing:-.01em; text-align:right; line-height:1;
+  }
+  .brand small{display:block; font-family:'Archivo',ui-sans-serif,system-ui,Arial,sans-serif; font-weight:500;
+    font-size:10px; letter-spacing:.28em; color:var(--muted); margin-top:7px}
+
+  /* ====== BLOQUE DE TÍTULO DEL HITO ====== */
+  .caption{
+    position:absolute; left:var(--pad); right:var(--pad);
+    bottom:clamp(118px, 16vh, 200px); z-index:6;
+  }
+  .c-year{
+    font-family:'Archivo',ui-sans-serif,system-ui,Arial,sans-serif; font-weight:700; font-size:13px; letter-spacing:.2em;
+    color:var(--accent); margin-bottom:14px; transition:color .6s var(--ease);
+    overflow:hidden;
+  }
+  .c-title{
+    font-family:'Fraunces',Georgia,'Times New Roman',serif; font-weight:360;
+    font-size:clamp(34px, 6.6vw, 104px); line-height:.98; letter-spacing:-.02em;
+    max-width:18ch;
+  }
+  .c-title em{font-style:normal; color:var(--accent); transition:color .6s var(--ease)}
+  .c-sub{
+    margin-top:18px; font-size:clamp(12px,1.1vw,14px); color:var(--muted);
+    letter-spacing:.02em; max-width:46ch; line-height:1.5;
+  }
+  /* máscara para revelar líneas */
+  .mask{overflow:hidden; display:block}
+
+  /* ====== FLECHAS ====== */
+  .nav-arrow{
+    position:absolute; top:50%; transform:translateY(-50%);
+    width:clamp(44px,5vw,66px); height:clamp(44px,5vw,66px);
+    display:flex; align-items:center; justify-content:center;
+    background:none; border:1px solid var(--line); border-radius:50%;
+    color:var(--paper); cursor:pointer; z-index:7;
+    transition:border-color .4s, background .4s, transform .4s var(--ease);
+  }
+  .nav-arrow:hover{background:var(--paper); color:var(--ink); border-color:var(--paper)}
+  .nav-arrow svg{width:42%; height:42%}
+  .prev{left:var(--pad)}  .next{right:var(--pad)}
+  .nav-arrow:active{transform:translateY(-50%) scale(.92)}
+
+  /* ====== BARRA DE AÑOS (sticky abajo) ====== */
+  .timeline{
+    position:absolute; left:0; right:0; bottom:0; z-index:8;
+    padding:18px var(--pad) calc(18px + env(safe-area-inset-bottom));
+    background:linear-gradient(to top, var(--ink) 30%, transparent);
+  }
+  .track{
+    position:relative; display:flex; gap:0; justify-content:space-between;
+    border-top:1px solid var(--line); padding-top:16px;
+  }
+  .yr{
+    position:relative; background:none; border:none; cursor:pointer;
+    font-family:'Archivo',ui-sans-serif,system-ui,Arial,sans-serif; font-weight:600; font-size:clamp(11px,1.05vw,14px);
+    color:var(--muted); letter-spacing:.04em; padding:4px 2px;
+    transition:color .35s var(--ease); flex:1; text-align:center;
+  }
+  .yr:hover{color:var(--paper)}
+  .yr.active{color:var(--accent)}
+  .yr::before{
+    content:""; position:absolute; top:-17px; left:50%; transform:translateX(-50%);
+    width:6px; height:6px; border-radius:50%; background:var(--line);
+    transition:background .35s, transform .35s var(--ease);
+  }
+  .yr.active::before{background:var(--accent); transform:translateX(-50%) scale(1.5)}
+  /* indicador que se desliza */
+  .indicator{
+    position:absolute; top:-20px; width:12px; height:12px; border-radius:50%;
+    border:1.5px solid var(--accent); transition:left .5s var(--ease), border-color .6s;
+    pointer-events:none;
+  }
+  .counter{
+    position:absolute; right:var(--pad); top:-2px;
+    font-family:'Fraunces',Georgia,'Times New Roman',serif; font-size:12px; color:var(--muted);
+  }
+  .counter b{color:var(--paper); font-weight:500}
+
+  /* progreso de autoplay */
+  .progress{position:absolute; top:-1px; left:0; height:1px; background:var(--accent); width:0; opacity:.7}
+
+  /* ====== RESPONSIVE ====== */
+  @media (max-width:720px){
+    .brand small{display:none}
+    .hint{display:none}
+    .intro{max-width:24ch}
+    .intro h1{font-size:13px}
+    .caption{bottom:150px}
+    .c-title{font-size:clamp(30px,8.5vw,52px); max-width:14ch}
+    .c-sub{display:none}
+    .nav-arrow{top:auto; bottom:128px; transform:none}
+    .nav-arrow:active{transform:scale(.92)}
+    .prev{left:var(--pad)} .next{right:var(--pad)}
+    .yr{font-size:10px; letter-spacing:0}
+    .track{padding-top:14px}
+    .counter{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition-duration:.01ms !important}
+  }
+
+  /* hint inicial */
+  .hint{
+    position:absolute; left:50%; bottom:clamp(118px,16vh,200px);
+    transform:translateX(-50%); z-index:6; text-align:center;
+    font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted);
+    pointer-events:none; transition:opacity .6s;
+  }
+  .hint span{display:block; font-size:18px; margin-top:6px; animation:bob 1.8s infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+</style>
+</head>
+<body>
+<main class="stage" id="stage" aria-label="Línea de tiempo: 15 años de la Fundación Auristela">
+
+  <div class="panels" id="panels"></div>
+  <div class="grain"></div>
+
+  <header class="top">
+    <div class="intro">
+      <div class="kicker">1968 — 2023 · Quince años de archivo</div>
+      <h1>Una historia incompleta de la Fundación, contada a través de los objetos, las personas y los gestos que la formaron. Avanza por la línea o déjala correr.</h1>
+    </div>
+    <div class="brand">Auristela<small>FUNDACIÓN</small></div>
+  </header>
+
+  <button class="nav-arrow prev" id="prev" aria-label="Hito anterior">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15 5l-7 7 7 7"/></svg>
+  </button>
+  <button class="nav-arrow next" id="next" aria-label="Hito siguiente">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 5l7 7-7 7"/></svg>
+  </button>
+
+  <div class="caption" id="caption" aria-live="polite"></div>
+
+  <div class="hint" id="hint">Arrastra o usa las flechas<span>→</span></div>
+
+  <nav class="timeline" aria-label="Navegación por año">
+    <div class="track" id="track">
+      <span class="indicator" id="indicator"></span>
+      <div class="progress" id="progress"></div>
+    </div>
+    <div class="counter"><b id="cur">01</b> / <span id="tot">06</span></div>
+  </nav>
+</main>
+
+<script>
+/* ============================================================
+   CONTENIDO — esto es lo único que la institución llena.
+   Cada hito: año, título (con *palabra* resaltada), subtítulo,
+   imagen y un color de acento propio de su época.
+   ============================================================ */
+const ITEMS = [
+  { year:"1968", img:"img/y01.jpg", accent:"#d8b25a",
+    title:"Donde *empezó* todo", sub:"Tres fundadores, una sala prestada y la primera colección de archivo." },
+  { year:"1979", img:"img/y02.jpg", accent:"#7fa8d6",
+    title:"La *sede* que nos definió", sub:"Inauguración del edificio histórico tras cuatro años de obra." },
+  { year:"1988", img:"img/y03.jpg", accent:"#86c08a",
+    title:"Abrimos las *puertas* al barrio", sub:"El primer programa público gratuito para la comunidad." },
+  { year:"1997", img:"img/y04.jpg", accent:"#e0a072",
+    title:"Una *colección* que viaja", sub:"La muestra itinerante que cruzó por primera vez el país." },
+  { year:"2008", img:"img/y05.jpg", accent:"#c9cbd2",
+    title:"El archivo se vuelve *digital*", sub:"Cuarenta años de memoria, catalogados y accesibles en línea." },
+  { year:"2023", img:"img/y06.jpg", accent:"#7ad0e2",
+    title:"Quince años *en marcha*", sub:"Lo que viene: nuevas voces, nuevos públicos, la próxima década." },
+];
+
+const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
+let i = 0, busy = false, autoTimer = null;
+
+/* ---- construir paneles de imagen ---- */
+const panelsEl = document.getElementById("panels");
+ITEMS.forEach((it, idx)=>{
+  const p = document.createElement("div");
+  p.className = "panel"; p.dataset.idx = idx;
+  p.innerHTML = `<div class="media" style="background-image:url('${it.img}')"></div>`;
+  panelsEl.appendChild(p);
+});
+const panels = [...document.querySelectorAll(".panel")];
+const medias = panels.map(p=>p.querySelector(".media"));
+
+/* ---- construir barra de años ---- */
+const track = document.getElementById("track");
+ITEMS.forEach((it, idx)=>{
+  const b = document.createElement("button");
+  b.className="yr"; b.textContent = it.year; b.dataset.idx=idx;
+  b.setAttribute("aria-label", `Ir a ${it.year}`);
+  b.addEventListener("click", ()=>go(idx));
+  track.appendChild(b);
+});
+const yrs = [...document.querySelectorAll(".yr")];
+const indicator = document.getElementById("indicator");
+document.getElementById("tot").textContent = String(ITEMS.length).padStart(2,"0");
+
+/* ---- helpers de caption ---- */
+function renderTitle(t){
+  // *palabra* => <em>palabra</em>
+  return t.replace(/\*(.+?)\*/g, '<em>$1</em>');
+}
+function buildCaption(it){
+  return `
+    <div class="c-year mask"><span>${it.year}</span></div>
+    <h2 class="c-title"><span class="mask"><span>${renderTitle(it.title)}</span></span></h2>
+    <p class="c-sub mask"><span>${it.sub}</span></p>`;
+}
+
+/* ---- transición principal ---- */
+function go(n, dir){
+  if(busy || n===i) { if(n===i) return; }
+  const target = (n+ITEMS.length)%ITEMS.length;
+  dir = dir || (target>i ? 1 : -1);
+  busy = true;
+  const accent = ITEMS[target].accent;
+  document.documentElement.style.setProperty("--accent", accent);
+
+  const cur = panels[i], nxt = panels[target];
+  const curMedia = medias[i], nxtMedia = medias[target];
+
+  // preparar panel entrante
+  gsap.set(nxt, {visibility:"visible", opacity:0});
+  gsap.set(nxtMedia, {scale:1.12, xPercent: dir*4});
+
+  // caption entrante
+  const cap = document.getElementById("caption");
+  cap.innerHTML = buildCaption(ITEMS[target]);
+  const lines = cap.querySelectorAll(".mask > span");
+  gsap.set(lines, {yPercent:115});
+
+  const tl = gsap.timeline({
+    defaults:{ease:"power3.out"},
+    onComplete:()=>{
+      gsap.set(cur,{visibility:"hidden",opacity:0});
+      busy=false;
+    }
+  });
+
+  if(reduce){
+    tl.set(nxt,{opacity:1}).set(cur,{opacity:0,visibility:"hidden"})
+      .set(lines,{yPercent:0}).set(nxtMedia,{scale:1.06,xPercent:0});
+  } else {
+    tl.to(nxt,{opacity:1, duration:.9, ease:"power2.inOut"},0)
+      .to(cur,{opacity:0, duration:.9, ease:"power2.inOut"},0)
+      .to(curMedia,{scale:1.16, xPercent:-dir*4, duration:1.1, ease:"power2.inOut"},0)
+      .to(nxtMedia,{scale:1.06, xPercent:0, duration:1.4, ease:"power2.out"},0)
+      .to(lines,{yPercent:0, duration:.9, stagger:.08, ease:"power3.out"},.25);
+  }
+
+  // actualizar barra de años + indicador + contador
+  yrs.forEach((y,k)=>y.classList.toggle("active",k===target));
+  moveIndicator(target);
+  document.getElementById("cur").textContent = String(target+1).padStart(2,"0");
+
+  i = target;
+}
+
+function moveIndicator(idx){
+  const y = yrs[idx];
+  const tr = track.getBoundingClientRect();
+  const r = y.getBoundingClientRect();
+  indicator.style.left = (r.left - tr.left + r.width/2 - 6) + "px";
+}
+
+/* ---- parallax con el mouse (sutil, solo desktop) ---- */
+let px=0,py=0,tx=0,ty=0;
+if(!reduce && matchMedia("(pointer:fine)").matches){
+  document.getElementById("stage").addEventListener("mousemove",e=>{
+    px = (e.clientX/innerWidth - .5);
+    py = (e.clientY/innerHeight - .5);
+  });
+  gsap.ticker.add(()=>{
+    tx += (px-tx)*.06; ty += (py-ty)*.06;
+    if(medias[i]) gsap.set(medias[i],{x: -tx*30, y:-ty*22, overwrite:"auto"});
+  });
+}
+
+/* ---- navegación ---- */
+function next(){ go(i+1, 1); }
+function prev(){ go(i-1,-1); }
+document.getElementById("next").addEventListener("click",()=>{stopAuto();next();});
+document.getElementById("prev").addEventListener("click",()=>{stopAuto();prev();});
+addEventListener("keydown",e=>{
+  if(e.key==="ArrowRight"){stopAuto();next();}
+  if(e.key==="ArrowLeft"){stopAuto();prev();}
+});
+
+/* ---- swipe / drag ---- */
+let sx=null;
+const stage=document.getElementById("stage");
+stage.addEventListener("touchstart",e=>sx=e.touches[0].clientX,{passive:true});
+stage.addEventListener("touchend",e=>{
+  if(sx===null)return;
+  const dx=e.changedTouches[0].clientX-sx;
+  if(Math.abs(dx)>50){ stopAuto(); dx<0?next():prev(); }
+  sx=null;
+});
+
+/* ---- autoplay con barra de progreso ---- */
+const progressEl=document.getElementById("progress");
+const HOLD=5200;
+function startAuto(){
+  if(reduce) return;
+  stopAuto();
+  let t0=performance.now();
+  autoTimer=requestAnimationFrame(function loop(now){
+    const p=Math.min((now-t0)/HOLD,1);
+    progressEl.style.width=(p*100)+"%";
+    if(p>=1){ progressEl.style.width="0%"; next(); t0=performance.now(); }
+    autoTimer=requestAnimationFrame(loop);
+  });
+}
+function stopAuto(){
+  if(autoTimer) cancelAnimationFrame(autoTimer);
+  autoTimer=null; progressEl.style.width="0%";
+  document.getElementById("hint").style.opacity="0";
+}
+
+/* ---- init ---- */
+function init(){
+  // primer panel visible sin animación
+  gsap.set(panels[0],{visibility:"visible",opacity:1});
+  gsap.set(medias[0],{scale:1.06});
+  document.documentElement.style.setProperty("--accent",ITEMS[0].accent);
+  yrs[0].classList.add("active");
+  const cap=document.getElementById("caption");
+  cap.innerHTML=buildCaption(ITEMS[0]);
+  const lines=cap.querySelectorAll(".mask > span");
+  gsap.fromTo(lines,{yPercent:115},{yPercent:0,duration:1,stagger:.09,ease:"power3.out",delay:.3});
+  requestAnimationFrame(()=>moveIndicator(0));
+  document.getElementById("cur").textContent="01";
+  setTimeout(startAuto, 2600);
+}
+addEventListener("resize",()=>moveIndicator(i));
+window.addEventListener("load",init);
+</script>
+</body>
+</html>
